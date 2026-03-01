@@ -309,3 +309,51 @@ con.load_extension('/path/to/ai.duckdb_extension')
 - 缺点：v0.0.1 是开发版本，可能不稳定
 
 **状态**：⏸️ 阻塞中，等待 Tech Lead 和 duckdb-engineer 决策
+
+---
+
+### 【daft-engineer】版本兼容问题更新 - 扩展重建为 v1.4.4 【2026-03-01】
+
+#### 最新发现
+
+**扩展重建情况**：
+- ✅ duckdb-engineer 已将 AI 扩展重建为 v1.4.4
+- 文件：`build/test/extension/ai.duckdb_extension` (25MB)
+
+**测试结果更新**：
+
+1. **Python duckdb v1.4.4 + 扩展 v1.4.4**：
+```python
+con = duckdb.connect(':memory:', config={'allow_unsigned_extensions': True})
+con.load_extension('/path/to/ai.duckdb_extension')
+# InvalidInputException: Initialization function threw exception:
+# "Attempted to dereference unique_ptr that is NULL!"
+```
+
+2. **DuckDB CLI v0.0.1 + 扩展 v1.4.4**：
+```bash
+./duckdb -unsigned -c "LOAD 'build/test/extension/ai.duckdb_extension';"
+# InvalidInputException: The file was built specifically for DuckDB version 'v1.4.4'
+# and can only be loaded with that version. (this version is 'v0.0.1')
+```
+
+**问题分析**：
+- CLI 版本：v0.0.1（无 tag 的开发版本）
+- Python duckdb 版本：v1.4.4（官方稳定版）
+- 扩展版本：v1.4.4（重建后）
+
+**问题根源**：
+- Python duckdb v1.4.4 虽版本匹配，但扩展初始化失败（NULL 指针）
+- 可能是扩展构建时的 API 不兼容或链接问题
+
+**已实现**：
+- ✅ `duckdb_cli_executor.py`: subprocess 调用 CLI 的执行器
+- ✅ `test_duckdb_cli_integration.py`: CLI 集成测试
+- ✅ Commit: 51117d6e7
+
+**需要决策**：
+1. duckdb-engineer 是否可以重新构建扩展（修复初始化问题）？
+2. 或者使用 v0.0.1 的 Python duckdb 绑定？
+3. 或者继续完善 CLI executor（需 v0.0.1 扩展）？
+
+**状态**：⏸️ 继续阻塞，等待协调
