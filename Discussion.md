@@ -45,3 +45,137 @@
 - 🟡 类型系统差异：需建立映射表
 
 **状态**：✅ TASK-D-001 完成，等待与 duckdb-engineer 协调 M1 实施方案
+
+---
+
+### 【Tech Lead】M1 阶段启动 - SQL 转译层设计完成 【2026-03-01】
+
+**交付物**：
+- ✅ `Daft/SQL_TRANSLATOR_DESIGN.md` - 完整 SQL 转译器设计文档
+
+**设计要点**：
+
+1. **架构**：访问者模式遍历 LogicalPlan 树
+2. **支持操作**：Source, Filter, Project, Aggregate (MVP)
+3. **类型映射**：Daft DataType → DuckDB SQL Type 完整映射表
+4. **文件结构**：
+   - `src/python/daft/execution/backends/duckdb_translator.py`
+   - `src/python/daft/execution/backends/duckdb_executor.py`
+   - `src/python/daft/execution/backends/duckdb_types.py`
+
+**与 DuckDB 集成**：
+```python
+# Daft 侧
+df.filter(ai_filter("image", "cat"))
+
+# 转译为 SQL
+SELECT * FROM table WHERE ai_filter(image, 'cat', 'clip') > 0.8
+```
+
+**状态**：✅ 设计完成，等待实现（duckdb-engineer AI_filter 就绪后）
+
+---
+
+### 【daft-engineer】TASK-D-004 实现完成 【2026-03-01】
+
+#### 1. 实现概述
+
+**已完成文件**：
+- ✅ `daft/execution/backends/__init__.py` - 模块导出
+- ✅ `daft/execution/backends/duckdb_types.py` - 类型映射
+- ✅ `daft/execution/backends/duckdb_translator.py` - SQL 转译器
+- ✅ `daft/execution/backends/duckdb_executor.py` - DuckDB 执行器
+- ✅ `tests/test_duckdb_translator.py` - 单元测试
+- ✅ `CHANGES.md` - 更新变更记录
+
+#### 2. 关键特性
+
+**类型映射 (`duckdb_types.py`)**：
+- 完整支持 Daft 基础类型 → DuckDB SQL 类型
+- 多模态类型支持：Image (VARCHAR), Embedding (FLOAT[]), Audio (VARCHAR)
+- 可扩展的映射机制
+
+**SQL 转译器 (`duckdb_translator.py`)**：
+- 访问者模式遍历 LogicalPlan
+- 支持：Source, Filter, Project, Aggregate (MVP)
+- AI 函数转译支持：`ai_filter(column, prompt, model)`
+- 表达式转译：列引用、字面量、二元操作
+
+**DuckDB 执行器 (`duckdb_executor.py`)**：
+- 连接管理（支持 in-memory 和持久化数据库）
+- DuckDB AI 扩展自动加载
+- 表注册：Pandas, PyArrow, Polas, Parquet
+- 结果返回：Python dict 列表 或 PyArrow Table
+- 上下文管理器支持
+
+#### 3. 集成示例
+
+```python
+# Daft API
+df = daft.read_parquet("images.parquet")
+filtered = df.filter(ai_filter("image", "cat"))
+
+# 转译流程
+translator = SQLTranslator()
+sql = translator.translate(filtered._builder)
+# 结果: SELECT * FROM read_parquet('images.parquet') WHERE ai_filter(image, 'cat', 'clip') > 0.8
+
+# 执行
+executor = DuckDBExecutor(extension_path="/path/to/ai.duckdb_extension")
+result = executor.execute_sql_to_arrow(sql)
+```
+
+#### 4. 已知限制（MVP）
+
+1. **计划解析**：当前使用启发式方法（字符串匹配），完整实现需要编译的 Rust 绑定
+2. **表达式转译**：支持基础表达式，复杂嵌套需要扩展
+3. **分布式**：MVP 仅支持单机
+4. **测试**：单元测试已编写，但需要编译 Python 绑定才能运行
+
+#### 5. 后续计划
+
+1. **立即**：在 Daft submodule 内 commit 代码
+2. **待办**：与 duckdb-engineer 协调端到端测试
+3. **优化**：实现完整的 LogicalPlan 树遍历（需 Rust 绑定编译）
+4. **扩展**：支持更多 LogicalPlan 操作（Join, Sort, Limit 等）
+
+**状态**：✅ 代码实现完成，等待 commit → sync
+
+---
+
+### 【daft-engineer】理解确认与风险预警 【2026-03-01】
+
+#### 1. 理解确认
+
+**当前项目状态**：
+- ✅ TASK-D-001 (M0) 已由 Tech Lead 完成：环境验证和架构调研
+- ✅ SQL Translator 设计文档已完成
+- 📋 下一步：实现 SQL 转译层（依赖 duckdb-engineer 的 AI_filter 扩展）
+
+**我的职责**：
+- 作为 Daft 框架侧高级工程师，负责 Daft 与 DuckDB 集成
+- 实现 LogicalPlan → DuckDB SQL 转译层
+- 确保 Daft 分布式设计原则不被破坏
+- 所有代码变更在 `Daft/` submodule 的 `feature/duckdb-integration` 分支进行
+
+#### 2. 风险预警
+
+**技术风险**：
+- 🔴 **接口依赖**：SQL 转译实现依赖 duckdb-engineer 完成 AI_filter 扩展的 UDF 接口定义
+- 🟡 **类型映射**：Daft 的多模态类型（Image/Embedding/Audio）与 DuckDB 类型系统的双向映射需要仔细处理
+- 🟡 **表达式转译**：复杂的 Daft Expression（如嵌套函数调用）转译为 SQL 可能需要多轮迭代
+- 🟡 **测试覆盖**：需要确保转译器生成的 SQL 能被 DuckDB 正确执行
+
+**流程风险**：
+- 🟡 Git 协调：每次 commit 需要等待 Tech Lead 执行 sync.sh 同步 submodule 指针
+- 🟡 分布式一致性：M1 阶段专注单机，但设计需考虑未来分布式扩展
+
+#### 3. 初步计划
+
+1. **等待同步**：先了解 duckdb-engineer 的进展（AI_filter 扩展状态）
+2. **实现 Translator**：按 `SQL_TRANSLATOR_DESIGN.md` 实现核心转译逻辑
+3. **单元测试**：为每个 LogicalPlan 操作编写转译测试
+4. **集成测试**：端到端验证 Daft DataFrame → SQL → DuckDB 执行流程
+5. **类型系统映射**：建立并测试 Daft ↔ DuckDB 类型映射表
+
+**状态：** ⏳ 等待 Tech Lead 确认当前优先级和下一步指令
