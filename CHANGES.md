@@ -64,3 +64,52 @@
 - 通过 subprocess 调用 DuckDB CLI
 - 使用 `-unsigned` 参数加载未签名扩展
 - 自动解析 CLI 输出为 Python 数据结构
+
+### [2026-03-01] TASK-17：M4 Daft AI 算子 API 实现
+- 类型：新增  |  文件：`daft/functions/ai/__init__.py`  |  摘要：添加 `ai_filter()` 函数到 Daft AI 函数模块
+- 类型：新增  |  文件：`tests/test_ai_filter_api.py`  |  摘要：API 单元测试（导入、表达式创建、SQL 转译）
+- 类型：新增  |  文件：`tests/test_ai_filter_e2e.py`  |  摘要：端到端集成测试（完整工作流、API 变体）
+- 类型：修改  |  文件：`daft/functions/__init__.py`  |  摘要：导出 `ai_filter` 函数
+- 类型：修改  |  文件：`daft/execution/backends/duckdb_translator.py`  |  摘要：更新 SQL 转译器支持 ai_filter 表达式
+- 测试：✅ 10/10 passed (5 API + 5 E2E)  |  编译：⏳ 待验证  |  commit：待创建  |  巡检：⏳
+
+**API 设计**：
+```python
+# 基本用法
+from daft.functions import ai_filter
+filtered = df.filter(ai_filter("image", "cat") > 0.8)
+
+# 指定模型
+filtered = df.filter(ai_filter(daft.col("image"), "cat", model="clip") > 0.8)
+
+# 添加相似度分数列
+df = df.with_column("cat_score", ai_filter("image", "cat"))
+```
+
+**实现方案**：
+- Expression 元数据标记：`_is_ai_filter`, `_ai_filter_column`, `_ai_filter_prompt`, `_ai_filter_model`
+- SQL 转译器识别元数据并生成：`ai_filter(column, 'prompt', 'model')`
+- 轻量级 Python 实现，无需修改 Rust 代码
+
+**测试覆盖**：
+1. 导入测试：验证 `ai_filter` 可从 `daft.functions` 导入
+2. 表达式创建：验证所有 API 变体
+3. SQL 转译：验证生成的 SQL 正确性
+4. Filter 用法：验证在 `df.filter()` 中的使用
+5. With_column 用法：验证添加列的操作
+6. 完整工作流：Daft → SQL → DuckDB 流程
+7. API 变体：字符串列名、列表达式、模型参数
+8. 文档示例：所有文档示例可执行
+
+**验证结果**：
+- ✅ 导入：`from daft.functions import ai_filter` 成功
+- ✅ 表达式：`ai_filter(daft.col("image"), "cat", model="clip")` 创建成功
+- ✅ SQL 转译：`ai_filter(image_path, 'cat', 'clip')`
+- ✅ 多模型支持：clip, openclip, sam 全部正确转译
+- ✅ DataFrame 集成：filter 和 with_column 语法正常工作
+
+**限制**：
+- ⚠️ 仅在 DuckDB backend 下工作（其他 backend 返回占位值 0.0）
+- ⏳ 完整的 DuckDB backend 集成测试待完成
+
+

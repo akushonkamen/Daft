@@ -184,13 +184,43 @@ class SQLTranslator:
             SQL expression string
         """
         try:
+            # Check if this is an ai_filter expression
+            if hasattr(expr, "_is_ai_filter") and expr._is_ai_filter:
+                # Extract the ai_filter parameters
+                image_expr = expr._ai_filter_column
+                prompt = expr._ai_filter_prompt
+                model = expr._ai_filter_model
+
+                # Translate the image expression to SQL
+                image_sql = self._translate_expression(image_expr)
+
+                # Format prompt and model as SQL literals
+                prompt_sql = self._format_literal(prompt)
+                model_sql = self._format_literal(model)
+
+                return f"ai_filter({image_sql}, {prompt_sql}, {model_sql})"
+
             expr_repr = repr(expr)
 
             # Handle column references
             if expr_repr.startswith("col("):
-                # Extract column name
-                col_name = expr.name if hasattr(expr, "name") else expr_repr[4:-1]
-                return col_name
+                # Extract column name - try multiple methods
+                if hasattr(expr, "column_name") and expr.column_name():
+                    return expr.column_name()
+                elif hasattr(expr, "name") and callable(expr.name):
+                    try:
+                        return str(expr.name())
+                    except:
+                        pass
+                elif hasattr(expr, "name"):
+                    col_name = str(expr.name)
+                    # Remove quotes if present
+                    col_name = col_name.strip('"\'')
+                    return col_name
+                else:
+                    # Fallback: parse from representation
+                    col_name = expr_repr[4:-1].strip('"\'')
+                    return col_name
 
             # Handle literals
             if expr_repr.startswith("lit("):
@@ -205,14 +235,6 @@ class SQLTranslator:
                     right = self._translate_expression(expr.right)
                     op = self._get_operator_symbol(expr)
                     return f"{left} {op} {right}"
-
-            # For AI functions (ai_filter, ai_aggregation, ai_transform)
-            if "ai_filter" in expr_repr.lower():
-                # This is where we translate Daft AI_filter calls to DuckDB UDF
-                # Format: ai_filter(column, prompt, model)
-                if hasattr(expr, "name"):
-                    return f"ai_filter({expr.name}, 'prompt', 'clip')"
-                return "ai_filter(image, 'prompt', 'clip')"
 
             # Default: return the expression as-is for now
             return expr_repr

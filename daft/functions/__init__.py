@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .ai import classify_image, classify_text, embed_text, embed_image, prompt
+from .ai import classify_image, classify_text, embed_text, embed_image, prompt, ai_filter
 from .agg import (
     count,
     count_distinct,
@@ -239,6 +239,7 @@ __all__ = [
     "approx_count_distinct",
     "approx_percentiles",
     "arccos",
+    "ai_filter",
     "arccosh",
     "arcsin",
     "arcsinh",
