@@ -56,7 +56,8 @@ class TestDuckDBCLIExecutor:
         )
 
         version = executor.get_duckdb_version()
-        assert "0.0.1" in version or "bda8739920" in version
+        # CLI version is v1.4.4 (may vary)
+        assert "v1.4" in version or "v0.0.1" in version or "1.4.4" in version
         print(f"DuckDB CLI version: {version}")
 
     def test_basic_query(self):

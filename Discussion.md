@@ -466,3 +466,46 @@ result = subprocess.run(cmd, capture_output=True, text=True)
 3. 性能测试（subprocess 开销）
 
 **状态**：✅ CLI 验证完成，等待 sync 和下一步指示
+
+---
+
+### 【Tech Lead】CLI 集成验证完成 【2026-03-01】
+
+#### 验证结果：✅ 全部通过 (10/10 tests)
+
+**环境**：
+- DuckDB CLI: v1.4.4
+- AI Extension: 83 KB (build/test/extension/ai.duckdb_extension)
+- ai_filter 签名: `ai_filter(BLOB, VARCHAR, VARCHAR) -> DOUBLE`
+
+**修复内容**：
+1. **扩展重建**：使用 v1.4.4 版本元数据
+2. **解析器修复**：`_parse_output()` 正确处理 CLI 表格输出（跳过类型行）
+3. **测试更新**：版本检查兼容 v1.4.4
+
+**测试覆盖**：
+1. ✅ test_cli_exists: CLI 可执行文件存在
+2. ✅ test_extension_exists: AI 扩展文件存在
+3. ✅ test_executor_creation: 执行器初始化
+4. ✅ test_get_version: 版本检测
+5. ✅ test_basic_query: 基础 SQL 查询
+6. ✅ test_ai_filter_function: ai_filter 函数调用（返回 0.0-1.0 分数）
+7. ✅ test_filter_query: WHERE 子句过滤
+8. ✅ test_aggregation_query: 聚合函数（COUNT, AVG）
+9. ✅ test_context_manager: 上下文管理器
+10. ✅ test_simple_pipeline: 端到端管道
+
+**完整链路验证**：
+```
+Daft DataFrame (概念)
+    ↓ [SQLTranslator]
+SQL Query (ai_filter(...))
+    ↓ [DuckDBCLIExecutor]
+DuckDB CLI (subprocess)
+    ↓ [AI Extension]
+ai_filter() 函数执行
+    ↓
+结果返回 Python dict
+```
+
+**状态**：✅ TASK-INTEGRATION-002 完成

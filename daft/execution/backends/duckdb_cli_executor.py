@@ -129,26 +129,41 @@ class DuckDBCLIExecutor:
 
         Returns:
             List of dictionaries representing rows
+
+        CLI Output Format:
+            ┌─────────┐        <- line 0: top border
+            │   col1  │        <- line 1: header (column names)
+            │  varchar │        <- line 2: type row (SKIP)
+            ├─────────┤        <- line 3: separator (SKIP)
+            │  value1 │        <- line 4: data
+            └─────────┘        <- line n: bottom border (SKIP)
         """
         # Split output into lines
         lines = output.strip().split("\n")
 
-        if len(lines) < 3:
-            # No results or error
+        if len(lines) < 5:
+            # Need at least: top border, header, type, separator, bottom border
             return []
 
-        # Extract column names (second line, after border)
+        # Extract column names (line 1, after top border)
         # Format: │ col1 │ col2 │ col3 │
         header_line = lines[1].strip()
         columns = [col.strip() for col in header_line.split("│") if col.strip()]
 
-        # Extract data rows (skip header, separator, and footer)
-        data_lines = lines[2:-1]  # Skip separator and footer border
-
+        # Extract data rows (skip everything before separator and after data)
+        # Line 0: top border (┌)
+        # Line 1: header (column names)
+        # Line 2: type row (varchar, int32, etc.) - SKIP
+        # Line 3: separator (├) - SKIP
+        # Lines 4+: data rows until bottom border (└)
         results = []
-        for line in data_lines:
-            if not line.strip() or "├" in line or "└" in line:
-                # Skip separator lines
+        for i in range(4, len(lines)):
+            line = lines[i]
+
+            # Skip empty lines and borders
+            if not line.strip():
+                continue
+            if "┌" in line or "┐" in line or "├" in line or "┤" in line or "└" in line or "┘" in line:
                 continue
 
             # Extract values: │ val1 │ val2 │ val3 │
