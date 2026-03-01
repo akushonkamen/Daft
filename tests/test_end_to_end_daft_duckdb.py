@@ -79,13 +79,15 @@ def test_with_daft(parquet_path):
 
         # 读取 Parquet
         df = daft.read_parquet(str(parquet_path))
-        print(f"✅ Read parquet: {df.shape()} rows")
+        row_count = df.count_rows()
+        print(f"✅ Read parquet: {row_count} rows")
 
         # 应用过滤（使用 ai_filter）
         # 注意：这是演示架构，实际 ai_filter 需要在 Daft 中实现
         print("   Applying ai_filter (conceptual)...")
         filtered_df = df.filter(df["category"] == "cat")
-        print(f"✅ Filtered: {filtered_df.shape()} rows")
+        filtered_count = filtered_df.count_rows()
+        print(f"✅ Filtered: {filtered_count} rows")
 
         # 转译为 SQL
         translator = SQLTranslator()
