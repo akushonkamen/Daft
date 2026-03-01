@@ -410,3 +410,59 @@ SELECT * FROM t WHERE ai_filter(image_base64, 'cat', 'clip') > 0.8
 3. ⏳ 端到端验证新 API
 
 **状态**：✅ 方案确认，等待扩展重建
+
+---
+
+### 【daft-engineer】CLI 集成验证完成 【2026-03-01】
+
+#### 验证结果：✅ 全部通过 (5/5 tests)
+
+**环境**：
+- DuckDB CLI: v0.0.1 (自定义构建)
+- AI Extension: 6.8 MB
+- 扩展路径: `duckdb/build/test/extension/ai.duckdb_extension`
+
+**测试覆盖**：
+
+1. ✅ **基础调用**：`SELECT ai_filter() AS score`
+   - 返回: 0.42 (随机分数，0.0-1.0)
+
+2. ✅ **多重调用**：单查询中多次调用
+   - 结果一致（FunctionLocalState 保持相同随机数）
+
+3. ✅ **WHERE 子句**：`WHERE ai_filter() > 0.0`
+   - 过滤正常工作
+
+4. ✅ **聚合函数**：`MIN()`, `MAX()`, `AVG()`, `COUNT()`
+   - 聚合正常工作
+
+5. ✅ **SELECT 投影**：`SELECT id, ai_filter() AS score`
+   - 列投影正常工作
+
+**关键发现**：
+- ✅ 扩展加载成功（`LOAD` 命令）
+- ✅ `ai_filter()` 函数可调用（无参数版本）
+- ✅ 返回 DOUBLE 类型，范围 [0.0, 1.0]
+- ✅ 在各种 SQL 上下文中正常工作
+
+**验证脚本**：
+- `tests/verify_cli_integration.py`: 自动化验证脚本
+- 可独立运行，无需 pytest
+
+**Daft 集成路径**：
+```python
+# 使用 subprocess 调用 CLI
+import subprocess
+
+cmd = ['./duckdb', '-unsigned',
+       '-c', "LOAD 'ai.duckdb_extension';",
+       '-c', "SELECT * FROM t WHERE ai_filter() > 0.8"]
+result = subprocess.run(cmd, capture_output=True, text=True)
+```
+
+**后续工作**：
+1. 实现 Daft DataFrame → SQL 转译（使用 `ai_filter()`）
+2. 端到端测试（Daft → SQL → CLI → Results）
+3. 性能测试（subprocess 开销）
+
+**状态**：✅ CLI 验证完成，等待 sync 和下一步指示
