@@ -357,3 +357,56 @@ con.load_extension('/path/to/ai.duckdb_extension')
 3. 或者继续完善 CLI executor（需 v0.0.1 扩展）？
 
 **状态**：⏸️ 继续阻塞，等待协调
+
+---
+
+### 【daft-engineer】方案更新 - VARCHAR (base64) 代替 BLOB 【2026-03-01】
+
+#### 解决方案确认
+
+**Tech Lead 决策**：
+- 使用 VARCHAR（base64 编码）代替 BLOB
+- 简化扩展构建，避免 NULL 指针问题
+
+**API 变更**：
+```sql
+-- 原计划
+ai_filter(image_blob BLOB, prompt VARCHAR, model VARCHAR) -> DOUBLE
+
+-- 新方案
+ai_filter(image_base64 VARCHAR, prompt VARCHAR, model VARCHAR) -> DOUBLE
+```
+
+#### 影响范围
+
+**Daft 侧变更**：
+1. 图像序列化：Image → base64 字符串
+2. SQL 转译：更新 ai_filter 调用格式
+3. 类型映射：Image → VARCHAR（已匹配）
+
+**示例**：
+```python
+# Daft DataFrame
+df = daft.read_images("images/")
+
+# 转为 base64（Daft 侧处理）
+df = df.with_column("image_base64", col("image").url_encode())
+
+# 转译为 SQL
+SELECT * FROM t WHERE ai_filter(image_base64, 'cat', 'clip') > 0.8
+```
+
+#### 优势
+
+1. ✅ 简化扩展实现（避免 BLOB 处理）
+2. ✅ 避免版本兼容性 NULL 指针问题
+3. ✅ 类型系统更简单（VARCHAR vs BLOB）
+4. ✅ 与现有 Daft Image 类型兼容（已是 VARCHAR）
+
+#### 待办
+
+1. ⏳ 等待 duckdb-engineer 完成扩展修改
+2. ⏳ 更新集成测试（VARCHAR 而非 BLOB）
+3. ⏳ 端到端验证新 API
+
+**状态**：✅ 方案确认，等待扩展重建
