@@ -256,3 +256,56 @@ ai_filter() 函数
 2. **待办**：与 duckdb-engineer 协调完整端到端测试
 3. **优化**：添加性能基准测试
 4. **扩展**：增加错误场景和边界条件测试
+
+---
+
+### 【daft-engineer】版本兼容性阻塞问题 【2026-03-01】
+
+#### 🔴 **阻塞问题：DuckDB 版本不匹配**
+
+**问题描述**：
+- **扩展构建版本**：DuckDB v0.0.1（自定义 build）
+- **Python 绑定版本**：DuckDB v1.4.4（pip install duckdb）
+- **错误**：扩展无法在 Python 中加载
+
+**验证结果**：
+
+1. **CLI 测试（成功）** ✅
+```bash
+$ ./duckdb -unsigned -c "LOAD 'build/test/extension/ai.duckdb_extension'; SELECT ai_filter('test'::BLOB, 'cat', 'clip') AS score;"
+┌────────────────────┐
+│       score        │
+├────────────────────┤
+│ 0.4260254388297486 │
+└────────────────────┘
+```
+
+2. **Python 测试（失败）** ❌
+```python
+import duckdb  # v1.4.4
+con = duckdb.connect(':memory:')
+con.load_extension('/path/to/ai.duckdb_extension')
+# InvalidInputException: The file was built specifically for DuckDB version 'v0.0.1'
+# and can only be loaded with that version of DuckDB. (this version is DuckDB is 'v1.4.4')
+```
+
+**影响范围**：
+- ❌ `tests/run_integration_tests.py` 无法运行
+- ❌ `tests/test_duckdb_integration.py` 无法运行
+- ❌ 端到端集成测试被阻塞
+
+**需要决策**：
+
+**方案 A**：要求 duckdb-engineer 重新构建扩展
+- 优点：可使用标准 Python duckdb 库
+- 缺点：需要扩展重新编译和测试
+
+**方案 B**：使用自定义 DuckDB Python 绑定
+- 优点：扩展立即可用
+- 缺点：需要构建自定义 Python 绑定，增加复杂度
+
+**方案 C**：降级 Python duckdb 到 v0.0.1
+- 优点：快速解决
+- 缺点：v0.0.1 是开发版本，可能不稳定
+
+**状态**：⏸️ 阻塞中，等待 Tech Lead 和 duckdb-engineer 决策

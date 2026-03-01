@@ -23,7 +23,7 @@ except ImportError:
     sys.exit(1)
 
 # Configuration
-EXTENSION_PATH = daft_root.parent / "duckdb" / "build" / "extension" / "ai" / "ai.duckdb_extension"
+EXTENSION_PATH = daft_root.parent / "duckdb" / "build" / "test" / "extension" / "ai.duckdb_extension"
 
 
 def test_extension_exists():
@@ -50,13 +50,35 @@ def test_extension_loads():
 
     try:
         con = duckdb.connect(":memory:")
+
+        # Check for version compatibility
+        import duckdb as duckdb_module
+        duckdb_version = duckdb_module.__version__
+        print(f"  ℹ️  Python duckdb version: {duckdb_version}")
+
+        # The extension was built for DuckDB v0.0.1
+        # Python bindings use v1.4.4 - this causes a version mismatch
+        if duckdb_version != "0.0.1":
+            print(f"  ⚠️  Version mismatch detected!")
+            print(f"      Extension built for: v0.0.1")
+            print(f"      Python duckdb version: v{duckdb_version}")
+            print(f"  ❌ Extension cannot be loaded due to version mismatch")
+            print(f"  💡 Solution: duckdb-engineer needs to rebuild extension for v{duckdb_version}")
+            return False
+
         con.execute(f"LOAD '{EXTENSION_PATH}'")
         print("  ✅ Extension loaded successfully")
         con.close()
         return True
     except Exception as e:
-        print(f"  ❌ Failed to load extension: {e}")
-        return False
+        error_msg = str(e)
+        if "version" in error_msg.lower():
+            print(f"  ⚠️  Version mismatch error: {error_msg[:100]}...")
+            print(f"  💡 This is expected - extension needs to be rebuilt for Python duckdb version")
+            return False
+        else:
+            print(f"  ❌ Failed to load extension: {e}")
+            return False
 
 
 def test_ai_filter_function():
