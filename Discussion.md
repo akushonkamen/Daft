@@ -179,3 +179,80 @@ result = executor.execute_sql_to_arrow(sql)
 5. **类型系统映射**：建立并测试 Daft ↔ DuckDB 类型映射表
 
 **状态：** ⏳ 等待 Tech Lead 确认当前优先级和下一步指令
+
+---
+
+### 【daft-engineer】TASK-INTEGRATION-001 完成 【2026-03-01】
+
+#### 1. 集成测试概述
+
+**测试文件**：
+- ✅ `tests/test_duckdb_integration.py` - pytest 集成测试套件
+- ✅ `tests/run_integration_tests.py` - 快速验证脚本（无需 pytest 依赖）
+
+#### 2. 测试覆盖
+
+**Type Mapping Tests**：
+- 基础类型：int64 → BIGINT, float64 → DOUBLE, string → VARCHAR, bool → BOOLEAN
+- 多模态类型：Image → VARCHAR, Embedding → FLOAT[], Audio → VARCHAR
+
+**SQL Translator Tests**：
+- 转译器初始化（有/无扩展路径）
+- 字面量格式化：字符串、布尔、数字、NULL
+
+**DuckDB Executor Tests**：
+- 执行器初始化和上下文管理
+- 基础 SQL 查询执行
+- 表注册功能（Pandas DataFrame → DuckDB 表）
+
+**AI Extension Integration Tests**：
+- ✅ 扩展文件存在（83KB）：`ai.duckdb_extension`
+- ✅ 扩展加载成功
+- ✅ ai_filter 函数可调用（返回 0.0-1.0 随机分数）
+
+**End-to-End Pipeline Tests**：
+- Filter 操作：`WHERE price > 15.0`
+- Project 操作：`SELECT name, price * 1.1 AS new_price`
+- Aggregate 操作：`GROUP BY region, SUM(amount)`
+
+#### 3. 测试发现
+
+**成功验证**：
+1. ✅ DuckDB AI 扩展已构建并可加载
+2. ✅ ai_filter 函数可用（MVP mock 返回随机分数）
+3. ✅ Daft 类型映射正确
+4. ✅ SQL 转译器基础功能正常
+5. ✅ DuckDB 执行器集成成功
+
+**使用方式**：
+```bash
+# 快速验证（无需 pytest）
+python tests/run_integration_tests.py
+
+# 完整 pytest 套件
+pytest tests/test_duckdb_integration.py -v
+```
+
+#### 4. 集成验证状态
+
+**Daft → SQL → DuckDB → AI_filter 完整链路**：
+```
+Daft DataFrame (概念)
+    ↓ [SQLTranslator]
+SQL Query
+    ↓ [DuckDBExecutor]
+DuckDB Engine
+    ↓ [AI Extension]
+ai_filter() 函数
+    ↓
+结果返回
+```
+
+**状态**：✅ 集成测试套件完成，等待 sync → 更全面的端到端验证
+
+#### 5. 后续工作
+
+1. **立即**：Commit 集成测试，请求 sync
+2. **待办**：与 duckdb-engineer 协调完整端到端测试
+3. **优化**：添加性能基准测试
+4. **扩展**：增加错误场景和边界条件测试

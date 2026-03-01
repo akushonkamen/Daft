@@ -17,6 +17,23 @@
 - 类型：新增  |  文件：`tests/test_duckdb_translator.py`  |  摘要：SQL 转译器单元测试
 - 测试：⏳ 待运行（需编译 Python 绑定）  |  编译：⏳ 待验证  |  commit：待创建  |  巡检：⏳
 
+### [2026-03-01] TASK-INTEGRATION-001：端到端集成测试套件
+- 类型：新增  |  文件：`tests/test_duckdb_integration.py`  |  摘要：pytest 集成测试套件（完整管道测试）
+- 类型：新增  |  文件：`tests/run_integration_tests.py`  |  摘要：快速验证脚本（无 pytest 依赖）
+- 测试：✅ 编写完成  |  编译：⏳ 待验证  |  commit：待创建  |  巡检：⏳
+
+**测试覆盖**：
+1. Type Mapping: Daft → DuckDB 类型映射验证
+2. SQL Translator: 转译器功能测试
+3. DuckDB Executor: 连接、表注册、查询执行
+4. AI Extension: 扩展加载、ai_filter 函数调用
+5. End-to-End: Filter、Project、Aggregate 完整管道
+
+**验证结果**：
+- ✅ DuckDB AI 扩展存在 (83KB)
+- ✅ 扩展加载成功
+- ✅ ai_filter 函数可调用（返回 0.0-1.0 分数）
+
 **关键实现**：
 1. 支持基础类型映射：整数、浮点、字符串、布尔、二进制
 2. 支持多模态类型：Image、Embedding、Audio
