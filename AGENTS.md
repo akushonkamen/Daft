@@ -11,6 +11,7 @@ git branch   # 应显示 feature/duckdb-integration
 
 # 每次 Task 完成后
 bash run_tests.sh            # 全量测试，必须全通过
+python3 benchmark_ray_performance.py  # 性能基准测试，记录结果
 git add -A
 git commit -m "feat(daft): [TASK-D-XXX] <描述>
 
@@ -18,6 +19,7 @@ git commit -m "feat(daft): [TASK-D-XXX] <描述>
 - 变更点2
 
 Tests: X passed / 0 failed
+Benchmark: Y rows/s (记录基准测试结果)
 Branch: feature/duckdb-integration"
 
 # 然后 SendMessage 通知 Tech Lead 执行 sync
@@ -76,3 +78,14 @@ git log --oneline -3：
 - 禁止空跑测试 / 伪造输出 / 截断日志
 - 重大架构决策先讨论，不自行拍板
 - commit 只在 Daft/ submodule 内
+
+## 性能监控 ⚠️
+**每次代码变更后必须运行性能基准测试：**
+```bash
+python3 benchmark_ray_performance.py
+```
+
+**要求**：
+- 记录性能数据到 CHANGES.md
+- 性能下降超过 10% 需要说明原因
+- 性能提升需要在完成报告中突出显示
