@@ -101,22 +101,27 @@
 ---
 
 ### 🔄 TASK-TEST-001：集成测试扩展
-**状态**：⏳ 待启动  |  **优先级**：🟢 中（测试覆盖）
+**状态**：🔄 进行中  |  **优先级**：🔴 高（质量保证）
 **分配**：daft-engineer  |  **Task ID**: #8
 
-**任务目标**：扩展集成测试，覆盖更多端到端场景。
+**任务目标**：扩展集成测试，覆盖更多端到端场景，达到覆盖率目标。
 
 **验收标准**：
+- [ ] **UT 覆盖率 ≥ 90%**（单元测试）
+- [ ] **DT 覆盖率 ≥ 80%**（集成测试）
 - [ ] 端到端测试（数据加载 → AI 处理 → 结果验证）
 - [ ] 错误场景测试（API 失败、超时、降级）
 - [ ] 性能回归测试（基准对比）
 - [ ] 多数据规模测试（10/100/1000 行）
 - [ ] 分布式场景测试
+- [ ] 覆盖率报告生成（pytest-cov）
 
 **交付物**：
 - [ ] `integration_tests/test_e2e_ai_pipeline.py` - 端到端测试
 - [ ] `integration_tests/test_error_scenarios.py` - 错误场景测试
 - [ ] `integration_tests/test_performance_regression.py` - 性能回归测试
+- [ ] `.coveragerc` - 覆盖率配置
+- [ ] `coverage_report/` - HTML 覆盖率报告
 
 ---
 
