@@ -79,10 +79,26 @@ git log --oneline -3：
 - 重大架构决策先讨论，不自行拍板
 - commit 只在 Daft/ submodule 内
 
+## 项目结构 📁
+```
+Daft/
+├── examples/               # 演示脚本（用户指南）
+├── integration_tests/     # 集成测试和性能基准
+├── tests/                  # 单元测试（Daft 原有框架测试）
+├── execution/backends/    # 后端实现
+├── functions/             # 函数库
+└── Task.md                 # 任务看板
+```
+
+**文件放置规则**：
+- 演示脚本 → `examples/`
+- 测试文件 → `tests/` 或 `integration_tests/`
+- 核心代码 → 相应模块目录
+
 ## 性能监控 ⚠️
 **每次代码变更后必须运行性能基准测试：**
 ```bash
-python3 benchmark_ray_performance.py
+python3 integration_tests/benchmark_ray_performance.py
 ```
 
 **要求**：
