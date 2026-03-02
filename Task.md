@@ -79,6 +79,7 @@
 
 ### 🔄 TASK-DOC-001：文档完善
 **状态**：🔄 进行中  |  **优先级**：🟢 中（文档）
+**分配**：daft-engineer  |  **Task ID**: #7
 
 **任务目标**：完善项目文档，确保 API 使用指南完整。
 
@@ -93,12 +94,15 @@
 - [ ] `docs/API.md` - API 参考文档
 - [ ] `docs/QUICKSTART.md` - 快速开始
 - [ ] `docs/MONITORING.md` - 监控使用指南
+- [ ] `docs/DEPLOYMENT.md` - 部署指南
+- [ ] `docs/TROUBLESHOOTING.md` - 故障排查指南
 - [ ] README.md 更新
 
 ---
 
 ### 🔄 TASK-TEST-001：集成测试扩展
 **状态**：⏳ 待启动  |  **优先级**：🟢 中（测试覆盖）
+**分配**：daft-engineer  |  **Task ID**: #8
 
 **任务目标**：扩展集成测试，覆盖更多端到端场景。
 
@@ -110,9 +114,9 @@
 - [ ] 分布式场景测试
 
 **交付物**：
-- [ ] `tests/test_e2e_ai_pipeline.py` - 端到端测试
-- [ ] `tests/test_error_scenarios.py` - 错误场景测试
-- [ ] `tests/test_performance_regression.py` - 性能回归测试
+- [ ] `integration_tests/test_e2e_ai_pipeline.py` - 端到端测试
+- [ ] `integration_tests/test_error_scenarios.py` - 错误场景测试
+- [ ] `integration_tests/test_performance_regression.py` - 性能回归测试
 
 ---
 
