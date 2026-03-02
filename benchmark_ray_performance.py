@@ -25,9 +25,13 @@ print("=" * 60)
 # CI 模式：使用快速 mock 测试
 CI_MODE = os.getenv("CI", "false").lower() == "true"
 
-# DuckDB 路径
-DUCKDB_CLI = Path("../duckdb/build/duckdb")
-AI_EXTENSION = Path("../duckdb/build/test/extension/ai.duckdb_extension")
+# 获取脚本所在目录，基于此计算相对路径
+SCRIPT_DIR = Path(__file__).parent.absolute()
+PROJECT_ROOT = SCRIPT_DIR.parent
+
+# DuckDB 路径（使用绝对路径，避免工作目录问题）
+DUCKDB_CLI = PROJECT_ROOT / "duckdb" / "build" / "duckdb"
+AI_EXTENSION = PROJECT_ROOT / "duckdb" / "build" / "test" / "extension" / "ai.duckdb_extension"
 
 # 测试配置
 TEST_SIZES = [10, 50] if CI_MODE else [10, 50, 100]
