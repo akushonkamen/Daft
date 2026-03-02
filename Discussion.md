@@ -997,6 +997,108 @@ else:  # 真正解析失败
 
 ---
 
+### 【daft-engineer】TASK-PROD-001 理解确认与风险预警 【2026-03-02】
+
+#### 1. 任务理解确认
+
+**任务目标**：让 Daft DataFrame 可以使用 Ray 进行分布式执行，同时支持 DuckDB backend
+
+**当前架构状态**：
+- ✅ Daft 已有完整的 `RayRunner` 实现 (`daft/runners/ray_runner.py`)
+- ✅ RayRunner 支持：本地/远程集群、Ray Client、Ray Jobs
+- ✅ 已实现 `FlotillaRunner` 用于分布式物理计划执行
+- ✅ AI Extension 已集成（通过 SQL 转译器 + CLI executor）
+
+**现有 Ray 支持关键代码**：
+```python
+# daft/runners/ray_runner.py
+class RayRunner(Runner[ray.ObjectRef]):
+    name = "ray"
+
+    def __init__(self, address: str | None, ...):
+        if not ray.is_initialized():
+            ray.init(address=address)
+        self.flotilla_plan_runner: FlotillaRunner | None = None
+```
+
+**启动方式**：
+```python
+import daft
+daft.set_runner_ray("ray://127.0.0.1:10001")  # 连接到远程 Ray 集群
+df = daft.read_parquet("data.parquet")
+result = df.collect()  # 分布式执行
+```
+
+#### 2. 技术方案评估
+
+**方案 A：单机 DuckDB + Ray 数据分片** (推荐 ✅)
+
+```
+Ray Cluster
+├── Worker 1: Daft + DuckDB CLI → 处理分区 1
+├── Worker 2: Daft + DuckDB CLI → 处理分区 2
+└── Worker 3: Daft + DuckDB CLI → 处理分区 3
+```
+
+- **优势**：
+  - ✅ 利用现有 RayRunner 基础设施
+  - ✅ DuckDB 单机执行性能极高（向量化）
+  - ✅ 每个节点独立，无分布式事务复杂性
+  - ✅ 已有 AI Extension 可在每个 worker 上加载
+
+- **劣势**：
+  - ⚠️ 跨节点聚合需要额外处理
+  - ⚠️ Join 操作需要数据移动
+
+**方案 B：Ray + DuckDB 分布式扩展** (不推荐 ❌)
+
+- DuckDB 目前没有真正的分布式执行模式
+- 需要复杂的协调层
+- 超出 MVP 范围
+
+#### 3. 风险预警
+
+| 风险 | 等级 | 说明 | 缓解措施 |
+|------|------|------|----------|
+| **Extension 分发** | 🔴 高 | AI 扩展需要在每个 Ray worker 上可用 | 打包扩展到 Ray runtime_env |
+| **CLI 依赖** | 🟡 中 | 当前使用 CLI executor，需要确保每个节点有 CLI | 考虑迁移到 Python duckdb 库 |
+| **聚合下推** | 🟡 中 | 分布式聚合需要部分聚合 + 全局聚合两阶段 | 实现 DAG 优化 |
+| **数据倾斜** | 🟢 低 | Ray 已有分区策略 | 监控 + 重分区 |
+
+#### 4. AC 验证计划
+
+**AC1：多节点 Ray 集群运行**
+```python
+# 验证脚本
+import daft
+daft.set_runner_ray("ray://head-node:10001")
+df = daft.read_parquet("s3://data/cifar10.parquet")
+filtered = df.filter(ai_filter("image", "cat") > 0.8)
+result = filtered.collect()
+```
+
+**AC2：DuckDB backend 在每个 worker 上可用**
+- 验证扩展文件存在
+- 验证 ai_filter() 函数可调用
+- 通过 Ray runtime_env 分发扩展
+
+**AC3：端到端演示**
+- CIFAR-10 数据集（60,000 张图像）
+- 4 节点 Ray 集群
+- AI_filter 分布式执行
+- 性能基准测试
+
+#### 5. 待确认事项
+
+1. **Ray 集群配置**：使用本地测试还是云端 Ray 集群？
+2. **扩展分发**：AI Extension 如何在 Ray workers 上安装？
+3. **数据源**：使用 S3 还是本地文件系统？
+4. **性能目标**：期望的加速比是多少？
+
+**状态**：⏳ 等待 Tech Lead 确认技术方案和执行优先级
+
+---
+
 ### 【daft-engineer】TASK-DEMO-003 完成：修复 demo_real.py 执行问题 【2026-03-02】
 
 #### 问题描述

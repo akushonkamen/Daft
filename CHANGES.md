@@ -112,4 +112,37 @@ df = df.with_column("cat_score", ai_filter("image", "cat"))
 - ⚠️ 仅在 DuckDB backend 下工作（其他 backend 返回占位值 0.0）
 - ⏳ 完整的 DuckDB backend 集成测试待完成
 
+### [2026-03-02] TASK-PROD-001：Ray 分布式执行支持（MVP）
+- 类型：新增  |  文件：`demo_ray_simple.py`  |  摘要：Ray + DuckDB 分布式架构验证演示脚本
+- 类型：新增  |  文件：`demo_ray_distributed.py`  |  摘要：完整分布式执行演示（含 CIFAR-10 数据集）
+- 测试：✅ 架构验证通过  |  编译：N/A  |  commit：待创建  |  巡检：⏳
+
+**架构验证结果**：
+- ✅ Ray 集群初始化（本地多进程）
+- ✅ 多 Worker 并行执行（4 任务 / 2 进程）
+- ✅ Worker 进程隔离验证
+- ✅ DuckDB CLI 在 Worker 上执行
+- ✅ AI Extension 在每个 Worker 上独立加载
+- ✅ 3/3 AI Filter 查询成功（0.38s 并行）
+
+**技术方案**：
+```
+Ray Cluster (本地多进程)
+├── Worker 1 (PID=N): Ray task → subprocess → DuckDB CLI + Extension
+├── Worker 2 (PID=M): Ray task → subprocess → DuckDB CLI + Extension
+└── 共享: Extension 文件路径，独立进程执行
+```
+
+**执行流程**：
+1. Ray `@ray.remote` 装饰器定义 Worker 函数
+2. 每个 Worker 独立调用 DuckDB CLI
+3. 每个 Worker 加载 AI Extension
+4. 并行执行 AI_filter 查询
+5. 结果返回 Ray driver 汇总
+
+**后续工作**：
+- ⏳ 使用 Ray runtime_env 自动分发 Extension
+- ⏳ 实现两阶段聚合优化
+- ⏳ 优化 HTTP API 调用（批处理/缓存）
+- ⏳ 支持大数据集分布式处理
 
