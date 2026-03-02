@@ -7,17 +7,27 @@
 
 ## 当前任务
 
-### TASK-PROD-001：分布式Ray集成
-**状态**：🔄 进行中  |  **优先级**：🟢 中（分布式扩展）
+### TASK-PROD-003：性能基准测试
+**状态**：🔄 进行中  |  **优先级**：🟢 中（性能优化）
 
-**任务目标**：让Daft DataFrame可以使用Ray进行分布式执行，同时支持DuckDB backend。
+**任务目标**：建立完整的性能基准测试，为后续优化提供数据支撑。
 
 **验收标准**：
-- [ ] 多节点Ray集群运行验证
-- [ ] DuckDB backend在每个worker上可用
-- [ ] 端到端演示（CIFAR-10数据集、4节点Ray集群、AI_filter分布式执行）
-- [ ] 性能基准测试
-- [ ] 在 Daft/ submodule 内完成 commit，通知 Tech Lead sync
+- [ ] 单机 DuckDB CLI 性能基准
+- [ ] Ray 分布式执行性能对比
+- [ ] AI API 调用延迟分析
+- [ ] 不同数据规模下的性能表现（10/100/1000 行）
+- [ ] 生成性能报告（CSV/JSON + Markdown）
+
+**CI/CD 要求**：
+- 支持 Mock 模式（CI 环境快速验证，< 30 秒）
+- 支持真实模式（本地完整性能测试）
+- 自动检测环境并选择模式
+
+**交付物**：
+- benchmark_ray_performance.py（主测试脚本）
+- benchmark_results.json（性能数据）
+- run_tests.sh 更新（添加基准测试）
 
 **推荐方案**：单机DuckDB + Ray数据分片
 - Ray Cluster中每个Worker独立运行Daft + DuckDB CLI
@@ -65,3 +75,22 @@
 
 ### ✅ TASK-DEMO-003：修复demo_real.py执行问题
 **状态**：✅ 通过
+
+### ✅ TASK-PROD-001：分布式Ray集成（优先级1 MVP）
+**状态**：✅ 通过
+
+**完成内容**：
+- ✅ Ray 集群初始化（本地多进程）
+- ✅ 多 Worker 并行执行验证（4 任务 / 2 进程）
+- ✅ Worker 进程隔离验证
+- ✅ DuckDB CLI 在 Worker 上执行
+- ✅ AI Extension 在每个 Worker 上独立加载
+- ✅ demo_ray_simple.py（架构验证脚本）
+- ✅ demo_ray_distributed.py（完整分布式演示）
+
+**技术方案**：
+```
+Ray Cluster (本地多进程)
+├── Worker 1: Ray task → subprocess → DuckDB CLI + Extension
+└── Worker 2: Ray task → subprocess → DuckDB CLI + Extension
+```
