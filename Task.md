@@ -7,37 +7,33 @@
 
 ## 当前任务
 
-### TASK-PROD-003：性能基准测试
-**状态**：🔄 进行中  |  **优先级**：🟢 中（性能优化）
+### ✅ TASK-PROD-003：性能基准测试
+**状态**：✅ 通过  |  **优先级**：🟢 中（性能优化）
 
 **任务目标**：建立完整的性能基准测试，为后续优化提供数据支撑。
 
 **验收标准**：
-- [ ] 单机 DuckDB CLI 性能基准
-- [ ] Ray 分布式执行性能对比
-- [ ] AI API 调用延迟分析
-- [ ] 不同数据规模下的性能表现（10/100/1000 行）
-- [ ] 生成性能报告（CSV/JSON + Markdown）
+- [x] 单机 DuckDB CLI 性能基准
+- [x] Ray 分布式执行性能对比
+- [x] AI API 调用延迟分析
+- [x] 不同数据规模下的性能表现（10/100/1000 行）
+- [x] 生成性能报告（CSV/JSON + Markdown）
 
 **CI/CD 要求**：
-- 支持 Mock 模式（CI 环境快速验证，< 30 秒）
-- 支持真实模式（本地完整性能测试）
-- 自动检测环境并选择模式
+- [x] 支持 Mock 模式（CI 环境快速验证，< 30 秒）
+- [x] 支持真实模式（本地完整性能测试）
+- [x] 自动检测环境并选择模式
 
 **交付物**：
-- benchmark_ray_performance.py（主测试脚本）
-- benchmark_results.json（性能数据）
-- run_tests.sh 更新（添加基准测试）
+- [x] integration_tests/benchmark_ray_performance.py（主测试脚本）
+- [x] benchmark_results.json（性能数据）
+- [x] run_tests.sh 更新（添加基准测试）
 
-**推荐方案**：单机DuckDB + Ray数据分片
-- Ray Cluster中每个Worker独立运行Daft + DuckDB CLI
-- 利用现有RayRunner基础设施
-- DuckDB单机执行性能极高（向量化）
-
-**风险预警**：
-- Extension分发（需在每个Ray worker上可用）
-- CLI依赖
-- 聚合下推
+**完成内容**：
+- ✅ 创建性能基准测试脚本
+- ✅ 修复路径问题（使用绝对路径）
+- ✅ 更新文档（移除误导性的 "mock data" 描述）
+- ✅ 添加性能监控工作流要求到 CLAUDE.md
 
 ---
 
