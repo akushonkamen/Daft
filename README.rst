@@ -13,10 +13,50 @@ Daft: High-Performance Data Engine for AI and Multimodal Workloads
 
 * **Native multimodal processing:** Process images, audio, video, and embeddings alongside structured data in a single framework
 * **Built-in AI operations:** Run LLM prompts, generate embeddings, and classify data at scale using OpenAI, Transformers, or custom models
+* **DuckDB Backend Integration:** SQL-based execution engine with multimodal AI functions (ai_filter, ai_aggregate) for high-performance analytical workloads
 * **Python-native, Rust-powered:** Skip the JVM complexity with Python at its core and Rust under the hood for blazing performance
 * **Seamless scaling:** Start local, scale to distributed clusters on `Ray <https://docs.daft.ai/en/stable/distributed/ray/>`_, `Kubernetes <https://docs.daft.ai/en/stable/distributed/kubernetes/>`_, or `Daft Cloud <https://www.daft.ai/cloud>`_
 * **Universal connectivity:** Access data anywhere (S3, GCS, Iceberg, Delta Lake, Hugging Face, Unity Catalog)
 * **Out-of-box reliability:** Intelligent memory management and sensible defaults eliminate configuration headaches
+
+DuckDB Integration
+-----------------
+
+.. note:: **New Feature**
+
+    Daft now supports DuckDB as a backend execution engine, providing SQL-based data processing with built-in AI functions for multimodal workloads.
+
+**Key Features:**
+
+* SQL query execution via DuckDB v1.4.4
+* Native AI filter functions (ai_filter, ai_filter_batch)
+* LogicalPlan to SQL translation
+* Distributed execution with Ray
+* Performance monitoring and structured logging
+
+**Quick Example:**
+
+.. code-block:: python
+
+    import duckdb
+
+    # Load AI extension
+    con = duckdb.connect()
+    con.execute("LOAD '/path/to/ai.duckdb_extension'")
+
+    # Use AI filter for image classification
+    result = con.execute("""
+        SELECT image_url, ai_filter_batch(image_data, 'cat', 'clip') as score
+        FROM images
+        WHERE score > 0.7
+    """).fetchall()
+
+For detailed documentation, see:
+
+* `API Reference <docs/API.md>`_ - Complete API documentation
+* `Deployment Guide <docs/DEPLOYMENT.md>`_ - Production deployment
+* `Monitoring <docs/MONITORING.md>`_ - Performance monitoring
+* `Troubleshooting <docs/TROUBLESHOOTING.md>`_ - Common issues and solutions
 
 Getting Started
 ---------------

@@ -389,6 +389,66 @@ df_loaded.show(5)
 (Showing first 5 rows)
 ```
 
+## DuckDB Backend Integration
+
+Daft now supports **DuckDB as a backend execution engine**, providing SQL-based data processing with exceptional performance for analytical workloads.
+
+!!! info "New Feature"
+
+    The DuckDB backend integration is a new feature that allows you to leverage DuckDB's SQL engine for high-performance data processing.
+
+### Using DuckDB Backend
+
+To use the DuckDB backend, specify it when creating your DataFrame:
+
+```python
+import daft
+
+# Create a DataFrame with DuckDB backend
+df = daft.DataFrame.from_pydict(
+    {"numbers": [1, 2, 3, 4, 5]},
+    backend="duckdb"
+)
+
+# Query execution happens in DuckDB
+result = df.select(df["numbers"] * 2).collect()
+```
+
+### AI Filter with DuckDB
+
+The integration includes **multimodal AI functions** that run directly in DuckDB:
+
+```python
+import duckdb
+
+# Connect to DuckDB with AI extension
+con = duckdb.connect()
+con.execute("LOAD 'path/to/ai.duckdb_extension'")
+
+# Use AI filter for image classification
+con.execute("""
+    SELECT
+        image_url,
+        ai_filter_batch(image_data, 'cat', 'clip') as is_cat_score
+    FROM images
+    WHERE ai_filter_batch(image_data, 'cat', 'clip') > 0.7
+""")
+```
+
+### Performance Benefits
+
+| Feature               | Python Backend | DuckDB Backend |
+|-----------------------|----------------|----------------|
+| SQL Queries           | ❌             | ✅             |
+| Vectorized Execution  | Partial        | ✅ Full        |
+| Analytical Workloads  | Moderate       | Excellent      |
+| AI Filter Pushdown    | ❌             | ✅             |
+
+For more information, see:
+- [API Reference - DuckDB Backend](API.md)
+- [Deployment Guide](DEPLOYMENT.md)
+- [Monitoring and Logging](MONITORING.md)
+
 ### What's Next?
 
 Now that you have a basic sense of Daft's functionality and features, here are some more resources to help you get the most out of Daft:
