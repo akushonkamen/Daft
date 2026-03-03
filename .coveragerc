@@ -1,0 +1,77 @@
+# Coverage configuration for TASK-TEST-001
+# pytest-cov configuration file
+
+[run]
+# Source code directories to measure coverage for
+source =
+    src/python/daft
+    integration_tests
+    monitoring
+
+# Omit certain files from coverage
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */.venv/*
+    */site-packages/*
+    */dist-packages/*
+
+# Branch coverage option (requires coverage 5.0+)
+branch = True
+
+# Enable partial coverage detection
+partial = Always
+
+# Precision for coverage reporting
+precision = 2
+
+[report]
+# Minimum coverage percentage (for CI enforcement)
+# fail_under = 80
+
+# Exclude lines from coverage consideration
+exclude_lines =
+    # Common exclusion patterns
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstract
+
+    # Debugging and development code
+    class Mock\(
+    import pytest
+    from pytest import
+
+    # Defensive programming
+    except ImportError:
+    except Exception:
+    if False:
+
+# Ignore errors during reporting
+ignore_errors = True
+
+# Show missing lines
+show_missing = True
+
+# Skip empty files
+skip_empty = True
+
+[html]
+# HTML report output directory
+directory = coverage_report
+
+# Title for the HTML report
+title = Daft DuckDB Integration Coverage Report
+
+[xml]
+# XML report output (for CI systems)
+output = coverage.xml
+
+[json]
+# JSON report output
+output = coverage.json
+pretty_print = True
