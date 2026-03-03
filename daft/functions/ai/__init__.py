@@ -38,6 +38,7 @@ __all__ = [
     "embed_text",
     "prompt",
     "ai_filter",
+    "ai_similarity",
 ]
 
 
@@ -735,5 +736,105 @@ def ai_filter(
     result._ai_filter_column = image  # type: ignore
     result._ai_filter_prompt = prompt  # type: ignore
     result._ai_filter_model = model  # type: ignore
+
+    return result
+
+
+##
+# DUCKDB AI SIMILARITY FUNCTIONS
+##
+
+
+def ai_similarity(
+    left_vec: Expression,
+    right_vec: Expression,
+    *,
+    model: str = "cosine",
+) -> Expression:
+    """Returns an expression that calculates semantic similarity between two vector embeddings.
+
+    This function integrates with DuckDB's AI extension to perform vector similarity
+    calculations. It supports multiple similarity metrics including cosine similarity,
+    dot product, and euclidean distance.
+
+    Args:
+        left_vec (Expression):
+            The left vector column expression (embedding column).
+        right_vec (Expression):
+            The right vector column expression (embedding column).
+        model (str):
+            Similarity metric to use. Default is "cosine".
+            Options: "cosine", "dot", "euclidean".
+
+    Returns:
+        Expression (Float64 Expression): An expression representing the similarity score (0.0 to 1.0).
+
+    Note:
+        This function requires a DuckDB execution backend with the AI extension loaded.
+        When used with other backends, it will return a placeholder value.
+
+        The return value ranges from 0.0 to 1.0, where 1.0 indicates maximum similarity.
+
+    Examples:
+        Basic similarity calculation:
+        >>> import daft
+        >>> from daft.functions import ai_similarity
+        >>> df = daft.read_parquet("embeddings.parquet")
+        >>> # Calculate similarity between two embedding columns
+        >>> df = df.with_column(  # doctest: +SKIP
+        ...     "similarity",
+        ...     ai_similarity(df["embedding_a"], df["embedding_b"])
+        ... )
+
+        Using with threshold filtering:
+        >>> df = df.filter(  # doctest: +SKIP
+        ...     ai_similarity(df["query_vec"], df["candidate_vec"], model="cosine") > 0.8
+        ... )
+
+        Using with explicit column references:
+        >>> df = df.with_column(  # doctest: +SKIP
+        ...     "score",
+        ...     ai_similarity(daft.col("embedding_1"), daft.col("embedding_2"), model="dot")
+        ... )
+
+        Joining DataFrames based on semantic similarity:
+        >>> df_left = daft.read_parquet("left.parquet")  # doctest: +SKIP
+        >>> df_right = daft.read_parquet("right.parquet")  # doctest: +SKIP
+        >>> df_joined = df_left.join(  # doctest: +SKIP
+        ...     df_right,
+        ...     on=ai_similarity(
+        ...         df_left["embedding"],
+        ...         df_right["embedding"],
+        ...         model="cosine"
+        ...     ) > 0.8
+        ... )
+    """
+    # Import col to ensure we're working with Expressions
+    from daft.expressions import col as _col
+
+    # Ensure left_vec is an expression
+    if not isinstance(left_vec, Expression):
+        left_vec = _col(left_vec)
+
+    # Ensure right_vec is an expression
+    if not isinstance(right_vec, Expression):
+        right_vec = _col(right_vec)
+
+    # Create a special expression that represents ai_similarity
+    # We use the expression's internal representation to mark it as an AI function
+    # The SQL translator will recognize this pattern
+
+    # For now, we create a simple placeholder
+    # The translator will look for "ai_similarity" in the expression representation
+    result = Expression._from_pyexpr(
+        Expression._to_expression(0.0)._expr  # Placeholder literal
+    )
+
+    # Store metadata for the translator
+    # We attach the ai_similarity information as attributes
+    result._is_ai_similarity = True  # type: ignore
+    result._ai_similarity_left_vec = left_vec  # type: ignore
+    result._ai_similarity_right_vec = right_vec  # type: ignore
+    result._ai_similarity_model = model  # type: ignore
 
     return result

@@ -200,6 +200,22 @@ class SQLTranslator:
 
                 return f"ai_filter({image_sql}, {prompt_sql}, {model_sql})"
 
+            # Check if this is an ai_similarity expression
+            if hasattr(expr, "_is_ai_similarity") and expr._is_ai_similarity:
+                # Extract the ai_similarity parameters
+                left_vec_expr = expr._ai_similarity_left_vec
+                right_vec_expr = expr._ai_similarity_right_vec
+                model = expr._ai_similarity_model
+
+                # Translate the vector expressions to SQL
+                left_vec_sql = self._translate_expression(left_vec_expr)
+                right_vec_sql = self._translate_expression(right_vec_expr)
+
+                # Format model as SQL literal
+                model_sql = self._format_literal(model)
+
+                return f"ai_similarity({left_vec_sql}, {right_vec_sql}, {model_sql})"
+
             expr_repr = repr(expr)
 
             # Handle column references
