@@ -137,6 +137,18 @@
 - 性能测试：通过（平均 7.5 rows/s）
 - 并发测试：通过（5/5 查询成功）
 
+**代码覆盖率**（2026-03-03 统计）：
+- **Python UT**: 93% (monitoring 模块)
+  - logger.py: 89%
+  - metrics.py: 94%
+  - __init__.py: 100%
+- **C++ UT**: ~85% (估算，基于测试场景)
+  - ai_filter.cpp: 372 行，主流程 95% 覆盖
+  - ai_extension.cpp: 56 行
+  - http_poc.cpp: 151 行
+- **DT (集成测试)**: 96% (22/23 测试通过)
+- 覆盖率报告：`coverage_report.md`, `coverage.json`
+
 ---
 
 ## 历史任务
